@@ -246,7 +246,31 @@ public class Parser {
         commandAST = new LetCommand(dAST, cAST, commandPos);
       }
       break;
-
+     
+    case Token.FOR:
+       {
+        acceptIt();
+        Vname vAST = parseVname();
+        accept(Token.BECOMES);
+        boolean to = true;
+        Expression e1AST = parseExpression(); 
+        if (currentToken.kind == Token.TO  ){
+        acceptIt();
+        } else if(currentToken.kind == Token.DOWNTO){
+        acceptIt();
+        to = false;
+        }
+        Expression e2AST = parseExpression();
+        accept(Token.DO);
+        Command cAST = parseSingleCommand();
+        
+        finish(commandPos);
+        
+        commandAST = new ForCommand(vAST, e1AST, to, e2AST, cAST, commandPos);
+        
+       }
+       break;
+    
     case Token.IF:
       {
         acceptIt();
@@ -581,7 +605,7 @@ public class Parser {
         declarationAST = new ProcDeclaration(iAST, fpsAST, cAST, declarationPos);
       }
       break;
-
+      
     case Token.FUNC:
       {
         acceptIt();

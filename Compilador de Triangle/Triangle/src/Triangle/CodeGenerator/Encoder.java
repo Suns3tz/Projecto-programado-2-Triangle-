@@ -47,6 +47,7 @@ import Triangle.AbstractSyntaxTrees.EmptyActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
+import Triangle.AbstractSyntaxTrees.ForCommand;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
@@ -115,6 +116,49 @@ public final class Encoder implements Visitor {
     return null;
   }
 
+  public Object visitForCommand(ForCommand ast, Object o) {
+      Frame frame = (Frame) o;
+      int jumpAddr, loopAddr;
+      
+      ast.E1.visit(this, frame);
+      
+      encodeStore(ast.V, frame, Machine.integerSize);
+      
+      jumpAddr = nextInstrAddr;
+      emit(Machine.JUMPop, 0, Machine.CBr, 0);
+      
+      loopAddr = nextInstrAddr;
+      ast.C.visit(this, frame);
+      
+      encodeFetch(ast.V, frame, Machine.integerSize);
+      
+      emit(Machine.LOADLop, 0, 0, 1);
+      
+      if(ast.to){
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.addDisplacement);
+      }else{
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.subDisplacement);  
+      }
+      
+      encodeStore(ast.V, frame, Machine.integerSize);
+      
+      patch(jumpAddr, nextInstrAddr);
+      
+      encodeFetch(ast.V, frame, Machine.integerSize);
+      
+      ast.E2.visit(this, frame);
+      
+      if (ast.to) {
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.leDisplacement);       
+      }else{
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.geDisplacement);
+      }
+      
+      emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+        
+      return null;
+  }
+  
   public Object visitIfCommand(IfCommand ast, Object o) {
     Frame frame = (Frame) o;
     int jumpifAddr, jumpAddr;

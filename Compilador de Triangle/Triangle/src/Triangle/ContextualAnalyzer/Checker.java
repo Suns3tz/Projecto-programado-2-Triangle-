@@ -57,7 +57,18 @@ public final class Checker implements Visitor {
   public Object visitEmptyCommand(EmptyCommand ast, Object o) {
     return null;
   }
-
+  
+  public Object visitForCommand(ForCommand ast, Object o) {
+    TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
+    if (!vType.equals(StdEnvironment.integerType))
+        reporter.reportError("Variable de control debe ser Integer", "", ast.V.position);
+    ast.E1.visit(this, null);
+    ast.E2.visit(this, null);
+    ast.C.visit(this, null);
+    return null;
+    
+  }
+  
   public Object visitIfCommand(IfCommand ast, Object o) {
     TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
     if (! eType.equals(StdEnvironment.booleanType))
@@ -230,7 +241,9 @@ public final class Checker implements Visitor {
                             ast.I.spelling, ast.position);
     return null;
   }
-
+  
+  
+  
   public Object visitFuncDeclaration(FuncDeclaration ast, Object o) {
     ast.T = (TypeDenoter) ast.T.visit(this, null);
     idTable.enter (ast.I.spelling, ast); // permits recursion

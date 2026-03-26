@@ -62,6 +62,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
+import Triangle.AbstractSyntaxTrees.RepeatCommand;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -116,6 +117,10 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitLetCommand(LetCommand ast, Object obj) {
     return layoutBinary("LetCom.", ast.D, ast.C);
+  }
+  
+  public Object visitRepeatCommand(RepeatCommand ast, Object obj) {
+      return layoutBinary("RepCom.", ast.C, ast.E);
   }
 
   public Object visitSequentialCommand(SequentialCommand ast, Object obj) {

@@ -58,6 +58,7 @@ public final class Checker implements Visitor {
     return null;
   }
   
+  //Visitador del For, este se tiene que asegurar que el Vname sea Integer
   public Object visitForCommand(ForCommand ast, Object o) {
     TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
     if (!vType.equals(StdEnvironment.integerType))
@@ -84,6 +85,14 @@ public final class Checker implements Visitor {
     ast.C.visit(this, null);
     idTable.closeScope();
     return null;
+  }
+  
+  
+  //Visitador del Repeat
+  public Object visitRepeatCommand(RepeatCommand ast, Object o){
+  ast.C.visit(this, null);
+  ast.E.visit(this, null);
+  return null;
   }
 
   public Object visitSequentialCommand(SequentialCommand ast, Object o) {

@@ -71,7 +71,7 @@ final class Token extends Object {
     BEGIN		= 5,
     CONST		= 6,
     DO			= 7,
-    DOWNTO              = 8, //We need downto for "for"
+    DOWNTO              = 8, //Necesitamos "downto" para el for
     ELSE		= 9,
     END			= 10,
     FOR                 = 11, 
@@ -84,9 +84,9 @@ final class Token extends Object {
     RECORD		= 18,
     REPEAT              = 19,
     THEN		= 20,
-    TO                  = 21, //Needed for "for"
+    TO                  = 21, //Necesitamos "to" para el for
     TYPE		= 22,
-    UNTIL               = 23, //Needed for Repeat
+    UNTIL               = 23, //Necesitamos el "until" para el final del repeat
     VAR			= 24,
     WHILE		= 25,
 

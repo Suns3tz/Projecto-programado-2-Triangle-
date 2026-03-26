@@ -196,7 +196,7 @@ public final class Encoder implements Visitor {
       //Se visita la condicion
       ast.E.visit(this, frame);
       //Emite un JumpIF para saber si ya se cumplió la condicion o no
-      emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+      emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, loopAddr);
       
       return null;
   }

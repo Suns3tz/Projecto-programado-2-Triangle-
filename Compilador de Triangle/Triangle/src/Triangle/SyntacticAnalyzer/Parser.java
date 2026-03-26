@@ -440,7 +440,31 @@ public class Parser {
         expressionAST = new RecordExpression(raAST, expressionPos);
       }
       break;
+    
+    case Token.MATCH:
+    {
+        acceptIt();
+        Expression eAST = parseExpression();
+        accept(Token.OF);
 
+        MatchCaseExpression caseAST = parseMatchCaseExpression();
+        MatchCaseExpressionSequence casesAST = caseAST;
+
+        while (currentToken.kind == Token.CASE) {
+            MatchCaseExpression nextCaseAST = parseMatchCaseExpression();
+            casesAST = new SequentialMatchCaseExpression(casesAST, nextCaseAST, expressionPos);
+        }
+
+        accept(Token.OTHERWISE);
+        accept(Token.COLON);
+        Expression otherwiseAST = parseExpression();
+
+        accept(Token.END);
+        finish(expressionPos);
+        expressionAST = new MatchExpression(eAST, casesAST, otherwiseAST, expressionPos);
+    }
+    break;
+    
     case Token.IDENTIFIER:
       {
         Identifier iAST= parseIdentifier();
@@ -481,6 +505,23 @@ public class Parser {
 
     }
     return expressionAST;
+  }
+  
+  MatchCaseExpression parseMatchCaseExpression() throws SyntaxError {
+    MatchCaseExpression caseAST = null;
+
+    SourcePosition casePos = new SourcePosition();
+    start(casePos);
+
+    accept(Token.CASE);
+    Expression e1AST = parseExpression();
+    accept(Token.COLON);
+    Expression e2AST = parseExpression();
+
+    finish(casePos);
+    caseAST = new MatchCaseExpression(e1AST, e2AST, casePos);
+
+    return caseAST;
   }
 
   RecordAggregate parseRecordAggregate() throws SyntaxError {

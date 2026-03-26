@@ -50,6 +50,9 @@ import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
 import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression;
+import Triangle.AbstractSyntaxTrees.MatchCaseExpression;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseExpression;
 import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
@@ -171,7 +174,19 @@ public class LayoutVisitor implements Visitor {
   public Object visitLetExpression(LetExpression ast, Object obj) {
     return layoutBinary("LetExpr.", ast.D, ast.E);
   }
+  
+  public Object visitMatchExpression(MatchExpression ast, Object obj) {
+    return layoutTernary("MatchExpr.", ast.E, ast.MCES, ast.OE);
+  }
 
+  public Object visitMatchCaseExpression(MatchCaseExpression ast, Object obj) {
+    return layoutBinary("CaseExpr.", ast.E1, ast.E2);
+  }
+
+  public Object visitSequentialMatchCaseExpression(SequentialMatchCaseExpression ast, Object obj) {
+    return layoutBinary("Seq.CaseExpr.", ast.MCES1, ast.MCES2);
+  }
+  
   public Object visitRecordExpression(RecordExpression ast, Object obj) {
     return layoutUnary("Rec.Expr.", ast.RA);
   }

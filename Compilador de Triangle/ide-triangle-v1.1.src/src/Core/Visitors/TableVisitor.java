@@ -40,6 +40,9 @@ import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
 import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression;
+import Triangle.AbstractSyntaxTrees.MatchCaseExpression;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -216,6 +219,25 @@ public class TableVisitor implements Visitor {
 
       return(null);
   }
+  
+  public Object visitMatchExpression(MatchExpression ast, Object obj) {
+        ast.E.visit(this, null);
+        ast.MCES.visit(this, null);
+        ast.OE.visit(this, null);
+        return null;
+    }
+
+    public Object visitMatchCaseExpression(MatchCaseExpression ast, Object obj) {
+        ast.E1.visit(this, null);
+        ast.E2.visit(this, null);
+        return null;
+    }
+
+    public Object visitSequentialMatchCaseExpression(SequentialMatchCaseExpression ast, Object obj) {
+        ast.MCES1.visit(this, null);
+        ast.MCES2.visit(this, null);
+        return null;
+    }
   
   public Object visitRecordExpression(RecordExpression ast, Object o) {   
       ast.RA.visit(this, null);

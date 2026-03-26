@@ -218,7 +218,61 @@ public final class Checker implements Visitor {
     idTable.closeScope();
     return ast.type;
   }
+  
+  public Object visitMatchExpression(MatchExpression ast, Object o) {
+    TypeDenoter controlType = (TypeDenoter) ast.E.visit(this, null);
 
+    if (!controlType.equals(StdEnvironment.integerType) &&
+        !controlType.equals(StdEnvironment.booleanType)) {
+      reporter.reportError("Integer or Boolean expression expected here", "",
+                           ast.E.position);
+    }
+
+    TypeDenoter caseResultType =
+        (TypeDenoter) ast.MCES.visit(this, controlType);
+
+    TypeDenoter otherwiseType =
+        (TypeDenoter) ast.OE.visit(this, null);
+
+    if (!caseResultType.equals(otherwiseType))
+      reporter.reportError("incompatible types in match expression", "",
+                           ast.OE.position);
+
+    ast.type = caseResultType;
+    return ast.type;
+  }
+  
+  private static class MatchExpressionContext {
+    public TypeDenoter controlType;
+    public TypeDenoter resultType;
+
+    public MatchExpressionContext(TypeDenoter controlType, TypeDenoter resultType) {
+      this.controlType = controlType;
+      this.resultType = resultType;
+    }
+  }
+  
+  public Object visitMatchCaseExpression(MatchCaseExpression ast, Object o) {
+    TypeDenoter controlType = (TypeDenoter) o;
+
+    TypeDenoter caseType = (TypeDenoter) ast.E1.visit(this, null);
+    if (!caseType.equals(controlType))
+      reporter.reportError("wrong type in match case", "", ast.E1.position);
+
+    return ast.E2.visit(this, null);
+  }
+  
+  public Object visitSequentialMatchCaseExpression(SequentialMatchCaseExpression ast, Object o) {
+    TypeDenoter t1 = (TypeDenoter) ast.MCES1.visit(this, o);
+    TypeDenoter t2 = (TypeDenoter) ast.MCES2.visit(this, o);
+
+    if (!t1.equals(t2))
+      reporter.reportError("incompatible types in match expression cases", "",
+                           ast.position);
+
+    return t1;
+  }
+  
   public Object visitRecordExpression(RecordExpression ast, Object o) {
     FieldTypeDenoter rType = (FieldTypeDenoter) ast.RA.visit(this, null);
     ast.type = new RecordTypeDenoter(rType, ast.position);

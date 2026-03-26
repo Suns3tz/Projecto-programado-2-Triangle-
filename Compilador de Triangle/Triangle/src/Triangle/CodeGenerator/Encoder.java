@@ -62,6 +62,9 @@ import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
 import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression;
+import Triangle.AbstractSyntaxTrees.MatchCaseExpression;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseExpression;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
@@ -299,7 +302,56 @@ public final class Encoder implements Visitor {
       emit(Machine.POPop, valSize.intValue(), 0, extraSize);
     return valSize;
   }
+  
+  public Object visitMatchExpression(MatchExpression ast, Object o) {
+    Frame frame = (Frame) o;
 
+    MatchExpressionFrame matchFrame = new MatchExpressionFrame(frame, ast.E);
+
+    ast.MCES.visit(this, matchFrame);
+    ast.OE.visit(this, frame);
+
+    int endAddr = nextInstrAddr;
+
+    for (int i = 0; i < matchFrame.exitJumps.size(); i++) {
+      patch(matchFrame.exitJumps.get(i).intValue(), endAddr);
+    }
+
+    return new Integer(1);
+  }
+  
+  public Object visitMatchCaseExpression(MatchCaseExpression ast, Object o) {
+    MatchExpressionFrame matchFrame = (MatchExpressionFrame) o;
+
+    int falseJumpAddr;
+    int exitJumpAddr;
+
+    matchFrame.control.visit(this, matchFrame.frame);
+    ast.E1.visit(this, new Frame(matchFrame.frame, Machine.integerSize));
+
+    emit(Machine.LOADLop, 0, 0, 1);
+    emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.eqDisplacement);
+
+    falseJumpAddr = nextInstrAddr;
+    emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, 0);
+
+    ast.E2.visit(this, matchFrame.frame);
+
+    exitJumpAddr = nextInstrAddr;
+    emit(Machine.JUMPop, 0, Machine.CBr, 0);
+    matchFrame.exitJumps.add(new Integer(exitJumpAddr));
+
+    patch(falseJumpAddr, nextInstrAddr);
+
+    return new Integer(1);
+  }
+  
+  public Object visitSequentialMatchCaseExpression(SequentialMatchCaseExpression ast, Object o) {
+    ast.MCES1.visit(this, o);
+    ast.MCES2.visit(this, o);
+    return new Integer(1);
+  }
+  
   public Object visitRecordExpression(RecordExpression ast, Object o){
     ast.type.visit(this, null);
     return ast.RA.visit(this, o);
@@ -800,6 +852,18 @@ public final class Encoder implements Visitor {
     public ArrayList<Integer> exitJumps;
 
     public MatchCommandFrame(Frame frame, Expression control) {
+      this.frame = frame;
+      this.control = control;
+      this.exitJumps = new ArrayList<Integer>();
+    }
+  }
+  
+  private static class MatchExpressionFrame {
+    public Frame frame;
+    public Expression control;
+    public ArrayList<Integer> exitJumps;
+
+    public MatchExpressionFrame(Frame frame, Expression control) {
       this.frame = frame;
       this.control = control;
       this.exitJumps = new ArrayList<Integer>();

@@ -37,6 +37,9 @@ import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -106,6 +109,21 @@ public class TreeVisitor implements Visitor {
     
     public Object visitLetCommand(LetCommand ast, Object obj) {
         return(createBinary("Let Command", ast.D, ast.C));
+    }
+    
+    public Object visitMatchCommand(MatchCommand ast, Object obj) {
+        if (ast.C == null)
+            return createBinary("Match Command", ast.E, ast.MCCS);
+        else
+            return createTernary("Match Command", ast.E, ast.MCCS, ast.C);
+    }
+    
+    public Object visitMatchCaseCommand(MatchCaseCommand ast, Object obj) {
+        return createBinary("Match Case Command", ast.E, ast.C);
+    }
+
+    public Object visitSequentialMatchCaseCommand(SequentialMatchCaseCommand ast, Object obj) {
+        return createBinary("Sequential Match Case Command", ast.MCCS1, ast.MCCS2);
     }
     
     public Object visitSequentialCommand(SequentialCommand ast, Object obj) {

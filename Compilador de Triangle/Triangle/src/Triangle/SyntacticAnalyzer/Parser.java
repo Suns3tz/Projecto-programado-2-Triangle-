@@ -235,7 +235,7 @@ public class Parser {
       commandAST = parseCommand();
       accept(Token.END);
       break;
-
+    
     case Token.LET:
       {
         acceptIt();
@@ -246,7 +246,34 @@ public class Parser {
         commandAST = new LetCommand(dAST, cAST, commandPos);
       }
       break;
+    
+    case Token.MATCH:
+      {
+        acceptIt();
+        Expression eAST = parseExpression();
+        accept(Token.OF);
 
+        MatchCaseCommand caseAST = parseMatchCaseCommand();
+        MatchCaseCommandSequence casesAST = caseAST;
+
+        while (currentToken.kind == Token.CASE) {
+            MatchCaseCommand nextCaseAST = parseMatchCaseCommand();
+            casesAST = new SequentialMatchCaseCommand(casesAST, nextCaseAST, commandPos);
+        }
+
+        Command otherwiseAST = null;
+        if (currentToken.kind == Token.OTHERWISE) {
+            acceptIt();
+            accept(Token.COLON);
+            otherwiseAST = parseSingleCommand();
+        }
+
+        accept(Token.END);
+        finish(commandPos);
+        commandAST = new MatchCommand(eAST, casesAST, otherwiseAST, commandPos);
+     }
+    break;
+      
     case Token.IF:
       {
         acceptIt();
@@ -290,6 +317,23 @@ public class Parser {
 
     return commandAST;
   }
+  
+  MatchCaseCommand parseMatchCaseCommand() throws SyntaxError {
+    MatchCaseCommand caseAST = null;
+
+    SourcePosition casePos = new SourcePosition();
+    start(casePos);
+
+    accept(Token.CASE);
+    Expression eAST = parseExpression();
+    accept(Token.COLON);
+    Command cAST = parseSingleCommand();
+
+    finish(casePos);
+    caseAST = new MatchCaseCommand(eAST, cAST, casePos);
+
+    return caseAST;
+ }
 
 ///////////////////////////////////////////////////////////////////////////////
 //

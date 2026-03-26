@@ -37,6 +37,9 @@ import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -127,6 +130,26 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
+  public Object visitMatchCommand(MatchCommand ast, Object obj) {
+       ast.E.visit(this, null);
+       ast.MCCS.visit(this, null);
+       if (ast.C != null)
+           ast.C.visit(this, null);
+       return null;
+  }
+
+   public Object visitMatchCaseCommand(MatchCaseCommand ast, Object obj) {
+       ast.E.visit(this, null);
+       ast.C.visit(this, null);
+       return null;
+   }
+   
+   public Object visitSequentialMatchCaseCommand(SequentialMatchCaseCommand ast, Object obj) {
+       ast.MCCS1.visit(this, null);
+       ast.MCCS2.visit(this, null);
+       return null;
+   }
+
   public Object visitSequentialCommand(SequentialCommand ast, Object o) { 
       ast.C1.visit(this, null);
       ast.C2.visit(this, null);

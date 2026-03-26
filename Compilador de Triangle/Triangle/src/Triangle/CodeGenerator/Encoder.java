@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.text.TableView.TableRow;
 
@@ -48,6 +49,7 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
+import Triangle.AbstractSyntaxTrees.Expression;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -58,6 +60,8 @@ import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
@@ -71,6 +75,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -137,6 +142,68 @@ public final class Encoder implements Visitor {
     ast.C.visit(this, new Frame(frame, extraSize));
     if (extraSize > 0)
       emit(Machine.POPop, 0, 0, extraSize);
+    return null;
+  }
+  
+  public Object visitMatchCommand(MatchCommand ast, Object o) {
+    Frame frame = (Frame) o;
+
+    MatchCommandFrame matchFrame = new MatchCommandFrame(frame, ast.E);
+
+    ast.MCCS.visit(this, matchFrame);
+
+    if (ast.C != null) {
+      ast.C.visit(this, frame);
+    }
+
+    int endAddr = nextInstrAddr;
+
+    for (int i = 0; i < matchFrame.exitJumps.size(); i++) {
+      patch(matchFrame.exitJumps.get(i).intValue(), endAddr);
+    }
+
+    return null;
+  }
+  
+  public Object visitMatchCaseCommand(MatchCaseCommand ast, Object o) {
+    MatchCommandFrame matchFrame = (MatchCommandFrame) o;
+
+    int falseJumpAddr;
+    int exitJumpAddr;
+
+    // cargar expresión principal del match
+    matchFrame.control.visit(this, matchFrame.frame);
+
+    // cargar expresión del case
+    ast.E.visit(this, new Frame(matchFrame.frame, Machine.integerSize));
+
+    // comparar ambos valores
+    // como match solo acepta Integer, Char o Boolean,
+    // el tamaño del valor es 1 palabra
+    emit(Machine.LOADLop, 0, 0, 1);
+    emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.eqDisplacement);
+
+    // si no son iguales, saltar al siguiente case
+    falseJumpAddr = nextInstrAddr;
+    emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, 0);
+
+    // si sí coincide, ejecutar el comando del case
+    ast.C.visit(this, matchFrame.frame);
+
+    // saltar al final del match
+    exitJumpAddr = nextInstrAddr;
+    emit(Machine.JUMPop, 0, Machine.CBr, 0);
+    matchFrame.exitJumps.add(new Integer(exitJumpAddr));
+
+    // si no coincidió, seguir con el siguiente case
+    patch(falseJumpAddr, nextInstrAddr);
+
+    return null;
+  }
+  
+  public Object visitSequentialMatchCaseCommand(SequentialMatchCaseCommand ast, Object o) {
+    ast.MCCS1.visit(this, o);
+    ast.MCCS2.visit(this, o);
     return null;
   }
 
@@ -726,6 +793,18 @@ public final class Encoder implements Visitor {
   }
 
   private ErrorReporter reporter;
+  
+  private static class MatchCommandFrame {
+    public Frame frame;
+    public Expression control;
+    public ArrayList<Integer> exitJumps;
+
+    public MatchCommandFrame(Frame frame, Expression control) {
+      this.frame = frame;
+      this.control = control;
+      this.exitJumps = new ArrayList<Integer>();
+    }
+  }
 
   // Generates code to run a program.
   // showingTable is true iff entity description details

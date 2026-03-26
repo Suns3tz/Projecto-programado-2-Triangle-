@@ -48,6 +48,9 @@ import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchCaseCommand;
+import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
@@ -113,6 +116,21 @@ public class LayoutVisitor implements Visitor {
     return layoutBinary("LetCom.", ast.D, ast.C);
   }
 
+  public Object visitMatchCommand(MatchCommand ast, Object obj) {
+    if (ast.C == null)
+      return layoutBinary("MatchCom.", ast.E, ast.MCCS);
+    else
+      return layoutTernary("MatchCom.", ast.E, ast.MCCS, ast.C);
+  }
+  
+  public Object visitMatchCaseCommand(MatchCaseCommand ast, Object obj) {
+    return layoutBinary("CaseCom.", ast.E, ast.C);
+  }
+  
+  public Object visitSequentialMatchCaseCommand(SequentialMatchCaseCommand ast, Object obj) {
+    return layoutBinary("Seq.CaseCom.", ast.MCCS1, ast.MCCS2);
+  }
+  
   public Object visitSequentialCommand(SequentialCommand ast, Object obj) {
     return layoutBinary("Seq.Com.", ast.C1, ast.C2);
   }

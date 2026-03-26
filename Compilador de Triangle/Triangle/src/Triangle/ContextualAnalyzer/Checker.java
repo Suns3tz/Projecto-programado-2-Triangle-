@@ -74,6 +74,41 @@ public final class Checker implements Visitor {
     idTable.closeScope();
     return null;
   }
+  
+  public Object visitMatchCommand(MatchCommand ast, Object o) {
+    TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+
+    if (!eType.equals(StdEnvironment.integerType) &&
+        !eType.equals(StdEnvironment.charType) &&
+        !eType.equals(StdEnvironment.booleanType)) {
+      reporter.reportError("Integer, Char or Boolean expression expected here", "",
+                           ast.E.position);
+    }
+
+    ast.MCCS.visit(this, eType);
+
+    if (ast.C != null)
+      ast.C.visit(this, null);
+
+    return null;
+  }
+  
+  public Object visitMatchCaseCommand(MatchCaseCommand ast, Object o) {
+    TypeDenoter expectedType = (TypeDenoter) o;
+    TypeDenoter caseType = (TypeDenoter) ast.E.visit(this, null);
+
+    if (!caseType.equals(expectedType))
+      reporter.reportError("wrong type in match case", "", ast.E.position);
+
+    ast.C.visit(this, null);
+    return null;
+  }
+  
+  public Object visitSequentialMatchCaseCommand(SequentialMatchCaseCommand ast, Object o) {
+    ast.MCCS1.visit(this, o);
+    ast.MCCS2.visit(this, o);
+    return null;
+  }
 
   public Object visitSequentialCommand(SequentialCommand ast, Object o) {
     ast.C1.visit(this, null);

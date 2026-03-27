@@ -57,6 +57,25 @@ public final class Checker implements Visitor {
   public Object visitEmptyCommand(EmptyCommand ast, Object o) {
     return null;
   }
+  
+  //Visitador del For, este se tiene que asegurar que el Vname sea Integer
+  public Object visitForCommand(ForCommand ast, Object o) {
+    TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
+    if (!vType.equals(StdEnvironment.integerType))
+        reporter.reportError("Variable de control debe ser Integer", "", ast.V.position);
+    ast.E1.visit(this, null);
+    ast.E2.visit(this, null);
+    ast.C.visit(this, null);
+    return null;
+    
+  }
+
+  //Visitador del Repeat
+  public Object visitRepeatCommand(RepeatCommand ast, Object o){
+  ast.C.visit(this, null);
+  ast.E.visit(this, null);
+  return null;
+  }
 
   public Object visitIfCommand(IfCommand ast, Object o) {
     TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);

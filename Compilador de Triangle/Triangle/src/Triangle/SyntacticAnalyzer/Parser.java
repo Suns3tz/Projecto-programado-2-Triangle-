@@ -247,7 +247,44 @@ public class Parser {
       }
       break;
     
-    case Token.MATCH:
+    case Token.FOR:
+       {
+        acceptIt(); //Acepta el Token For
+        Vname vAST = parseVname(); //Toma la primera variable
+        accept(Token.BECOMES); //Aceptamos :=
+        boolean to = true; // Booleano para conocer si vamos a usar to o downto
+        Expression e1AST = parseExpression(); // Tomamos la primera expresion
+        if (currentToken.kind == Token.TO  ){
+        acceptIt(); //Si es to lo aceptamos
+        } else if(currentToken.kind == Token.DOWNTO){
+        acceptIt();
+        to = false; //Si es down to lo aceptamos y cambiamos el booleano
+        }
+        Expression e2AST = parseExpression(); //Tomamos la segunda expresion
+        accept(Token.DO); //Buscamos el token DO
+        Command cAST = parseSingleCommand(); //Realizamos el comando
+        
+        finish(commandPos);
+        
+        commandAST = new ForCommand(vAST, e1AST, to, e2AST, cAST, commandPos);
+        
+       }
+       break;
+
+       
+    
+    case Token.REPEAT:
+        {
+        acceptIt(); //Acepta Token Repeat
+        Command cAST = parseCommand(); //Toma los comandos
+        accept(Token.UNTIL); //Busca el UNTIL
+        Expression eAST = parseExpression(); //Toma la expresion que se debe comparar
+        finish(commandPos);
+        commandAST = new RepeatCommand(cAST, eAST, commandPos);
+        }
+        break;
+    
+    case Token.MATCH:    
       {
         acceptIt();
         Expression eAST = parseExpression();

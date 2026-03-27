@@ -48,6 +48,7 @@ import Triangle.AbstractSyntaxTrees.EmptyActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
+import Triangle.AbstractSyntaxTrees.ForCommand;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
 import Triangle.AbstractSyntaxTrees.Expression;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
@@ -78,6 +79,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
+import Triangle.AbstractSyntaxTrees.RepeatCommand;
 import Triangle.AbstractSyntaxTrees.SequentialMatchCaseCommand;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
@@ -121,6 +123,66 @@ public final class Encoder implements Visitor {
 
   public Object visitEmptyCommand(EmptyCommand ast, Object o) {
     return null;
+  }
+
+  
+  public Object visitForCommand(ForCommand ast, Object o) {
+      Frame frame = (Frame) o;
+      int jumpAddr, loopAddr;
+      
+      ast.E1.visit(this, frame);//Evaluamos la expresion inicial
+      
+      encodeStore(ast.V, frame, Machine.integerSize); //Guardamos el valor de la varuiable
+      
+      jumpAddr = nextInstrAddr; //Direccion de la evaluacion de la condicion
+      emit(Machine.JUMPop, 0, Machine.CBr, 0); //Saltamos a la evaluacion 
+      
+      loopAddr = nextInstrAddr;//Direccion donde empieza el ciclo
+      ast.C.visit(this, frame); //Ejecuta el comando
+      
+      encodeFetch(ast.V, frame, Machine.integerSize); //Cargamos la variable
+      
+      emit(Machine.LOADLop, 0, 0, 1);//Cargamos una constante 1
+      
+      if(ast.to){ //Si es to, sumamos. Si es downto, restamos
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.addDisplacement);
+      }else{
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.subDisplacement);  
+      }
+      
+      encodeStore(ast.V, frame, Machine.integerSize); //Guardamos el nuevo valor
+      
+      patch(jumpAddr, nextInstrAddr);//Rellenamos el salto inicial
+      
+      encodeFetch(ast.V, frame, Machine.integerSize);//Tomamos la variable
+      
+      ast.E2.visit(this, frame); //La evaluamos con la expresion
+      
+      if (ast.to) { //Comparamos si es to con <= (le), si es downto con >= (ge)
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.leDisplacement);       
+      }else{
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.geDisplacement);
+      }
+      
+      //Si la condicion es TRUE, saltamos al inicio del ciclo
+      emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+        
+      return null;
+  }
+
+  public Object visitRepeatCommand(RepeatCommand ast, Object o) {
+      Frame frame = (Frame) o;
+      int loopAddr;
+      //Se guarda la ubicación inicial
+      loopAddr = nextInstrAddr;
+      //Se ejecuta el comando
+      ast.C.visit(this, frame);
+      //Se visita la condicion
+      ast.E.visit(this, frame);
+      //Emite un JumpIF para saber si ya se cumplió la condicion o no
+      emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, loopAddr);
+      
+      return null;
   }
 
   public Object visitIfCommand(IfCommand ast, Object o) {
